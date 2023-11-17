@@ -3,13 +3,12 @@
 This guide will teach you how to install and configure a standalone OSS version of the backStage application.
 We assume you have basic understanding of working on a Linux based operating system, using tools like npm, yarn, curl.
 
-
 ## Prerequisites
 
 Some development tools are required to be installed on your computer to get started with Backstage. These tools include;
 
 - [Node](https://nodejs.org/en) Version 16 or higher (We recommend using nvm for this)
-    - Install and change Node version with [nvm](https://nodejs.org/en/download/package-manager#nvm)
+  - Install and change Node version with [nvm](https://nodejs.org/en/download/package-manager#nvm)
 - [Yarn](https://classic.yarnpkg.com/en/docs/install/#mac-stable) for dependency management
 - [Docker](https://docs.docker.com/engine/install/) used for features such as Software Templates and Tech Docs
 - [Git](https://github.com/git-guides/install-git) for source control
@@ -20,7 +19,7 @@ To create a backstage app, run the command below to start the process. The wizar
 current working directory.
 
 ```sh
-npx @backstage/create-app
+npx @backstage/create-app demo
 ```
 
 To start the app, follow the `@backstage/create-app` cli post-installation steps and run the below command from the
@@ -52,49 +51,77 @@ some changes to customise the Backstage app; See the below list
   database library under the covers, which supports many popular databases. To configure backstage with postgresSQL, see
   the below steps;
 
-    * Follow the
-      instructions [here](https://backstage.spotify.com/learn/standing-up-backstage/configuring-backstage/5-config-2/)
-      to
-      install postgresSQL desktop application
-    * Alternatively, you can use docker to run postgresSQL locally
-        * Install [docker](https://formulae.brew.sh/formula/docker)
-          and [docker-compose](https://formulae.brew.sh/formula/docker-compose) cli's on your local machine
-        * Create a docker compose file ( e.g. `touch docker-compose-pg-local.yml`)
-        * Copy and paste below example code to the newly created docker compose file
-          ```yml
-          version: '3.8'
-          services:
-            db:
-             image: postgres:latest
-             restart: always
-             environment:
-              POSTGRES_USER: ${POSTGRES_USER}
-              POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-             ports:
-              - '5432:5432'
-             volumes:
-              - db:/var/lib/postgresql/data
-             healthcheck:
-              test: ["CMD-SHELL", "pg_isready -U spotify"]
-              interval: 5s
-              timeout: 5s
-              retries: 5
+  - Follow the
+    instructions [here](https://backstage.spotify.com/learn/standing-up-backstage/configuring-backstage/5-config-2/)
+    to
+    install postgresSQL desktop application
+  - Alternatively, you can use docker to run postgresSQL locally
+    - Install [docker](https://formulae.brew.sh/formula/docker)
+      and [docker-compose](https://formulae.brew.sh/formula/docker-compose) cli's on your local machine
+    - Create a docker compose file ( e.g. `touch docker-compose-pg-local.yml`)
+    - Copy and paste below example code to the newly created docker compose file
+      ```yml
+      version: '3.8'
+      services:
+        db:
+          image: postgres:latest
+          restart: always
+          environment:
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+          ports:
+            - '5432:5432'
           volumes:
-           db:
-             driver: local
-          ```
-        * To start the postgresSQL container locally using docker-compose, run
-          ```sh
-          docker-compose -f docker-compose-pg-local.yml up -d
-          ```
-        * To stop the postgresSQL container using docker-compose, run
-          ```sh
-          docker-compose -f docker-compose-pg-local.yml stop
-          ```
-        * To remove the postgresSQL container and volumes using docker-compose, run
-           ```sh
-           docker-compose -f docker-compose-pg-local.yml down -v
-           ```
+            - db:/var/lib/postgresql/data
+          healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U spotify']
+            interval: 5s
+            timeout: 5s
+            retries: 5
+      volumes:
+        db:
+          driver: local
+      ```
+    - To pull and start the postgresSQL container using docker-compose, run
+      ```sh
+      docker-compose -f docker-compose-pg-local.yml up -d
+      ```
+      > option "-d" means running in detach mode (i.e. background)
+    - To stop the postgresSQL container using docker-compose, run
+      ```sh
+      docker-compose -f docker-compose-pg-local.yml stop
+      ```
+    - To start the postgresSQL container using docker-compose, run
+      ```sh
+      docker-compose -f docker-compose-pg-local.yml start
+      ```
+    - To remove the postgresSQL container and volumes using docker-compose, run
+      ```sh
+      docker-compose -f docker-compose-pg-local.yml down -v
+      ```
+
+- ### Setup Enviroment Variables
+
+  You need to create and set enviroment variables to connect to the Postgres database with backstage. To do that, create a new file `touch .env` in the root directory, copy and paste the below;
+
+  ```sh
+  export POSTGRES_HOST=127.0.0.1
+  export POSTGRES_PORT=5432
+  export POSTGRES_USER=your-user
+  export POSTGRES_PASSWORD=your-password
+  ```
+
+  Alternatively, run the below command to copy the contents of example.env file to the new .env file.
+
+  ```sh
+  cp example.env .env
+  ```
+
+  Then, load the .env file to the shelll
+
+  ```sh
+  source .env
+  ```
 
 - ### Configuring PostgresSQL
 
@@ -108,27 +135,27 @@ some changes to customise the Backstage app; See the below list
   This is where you'll add the database configuration, since you’re setting up a database on your local machine right
   now.
 
-    - Copy and paste the below example code to `app-config.local.yaml` file in the root directory of your Backstage
-      app (
-      create
-      if it doesn't exist `touch app-config.local.yaml`)
+  - Copy and paste the below example code to `app-config.local.yaml` file in the root directory of your Backstage
+    app (
+    create
+    if it doesn't exist `touch app-config.local.yaml`)
 
-    ```yml
-    backend:
-    database:
-      client: pg
-      connection:
-        host: ${POSTGRES_HOST}
-        port: ${POSTGRES_PORT}
-        user: ${POSTGRES_USER}
-        password: ${POSTGRES_PASSWORD}
-    ```
+  ```yml
+  backend:
+  database:
+    client: pg
+    connection:
+      host: ${POSTGRES_HOST}
+      port: ${POSTGRES_PORT}
+      user: ${POSTGRES_USER}
+      password: ${POSTGRES_PASSWORD}
+  ```
 
-    - Start Backstage from the terminal, by typing `yarn dev` and pressing enter. As soon as you see:
+  - Start Backstage from the terminal, by typing `yarn dev` and pressing enter. As soon as you see:
 
-    ```sh
-    [0] webpack compiled successfully
-    ```
+  ```sh
+  [0] webpack compiled successfully
+  ```
 
   You're good to go and explore Backstage again. Note that if you've made any changes before, they might be gone. The
   default database is not persistent.
@@ -140,9 +167,9 @@ some changes to customise the Backstage app; See the below list
   In the root directory of the Backstage app, open `app-config.yaml` or `app-config.local.yml` and update the values of
   title and name:
 
-    ```yml
-    app:
-      title: <Any name>
-    organization:
-      name: <Any name>
-    ```
+  ```yml
+  app:
+    title: <Any name>
+  organization:
+    name: <Any name>
+  ```
